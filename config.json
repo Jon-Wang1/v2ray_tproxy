@@ -1,0 +1,168 @@
+{
+  "inbounds": [
+    {
+      "tag":"transparent",
+      "port": 12345,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "network": "tcp,udp",
+        "followRedirect": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      },
+      "streamSettings": {
+        "sockopt": {
+          "tproxy": "tproxy" // 透明代理使用 TPROXY 方式
+        }
+      }
+    },
+    {
+      "port": 1080,
+      "listen": "0.0.0.0",
+      "protocol": "socks", // 入口协议为 SOCKS 5
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      },
+      "settings": {
+        "auth": "noauth"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vmess", // 代理服务器
+      "settings": {
+        "vnext": [
+          {
+            "address": "107.21.135.87", //把所有域名改成你自己的 v2ray 域名
+            "port": 443,
+            "users": [
+              {
+                "id": "605b430d-5410-402e-b33d-0e544d8fb5e3", //改成你自己的 id
+                "alterId": 0,
+                "email": "t@t.tt",
+                "security": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "sockopt": {
+          "mark": 255
+        },
+        "network": "tcp"
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
+      "streamSettings": {
+        "sockopt": {
+          "mark": 255
+        }
+      }
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      }
+    },
+    {
+      "tag": "dns-out",
+      "protocol": "dns",
+      "streamSettings": {
+        "sockopt": {
+          "mark": 255
+        }
+      }
+    }
+  ],
+  "dns": {
+    "servers": [
+      "8.8.8.8", // 非中中国大陆域名使用 Google 的 DNS
+      "1.1.1.1", // 非中中国大陆域名使用 Cloudflare 的 DNS(备用)
+      "114.114.114.114", // 114 的 DNS (备用)
+      {
+        "address": "223.5.5.5", // 中国大陆域名使用阿里的 DNS
+        "port": 53,
+        "domains": [
+          "geosite:cn"
+        ]
+      }
+    ]
+  },
+  "routing": {
+    "domainStrategy": "IPOnDemand",
+    "rules": [
+      { // 劫持 53 端口 UDP 流量，使用 V2Ray 的 DNS
+        "type": "field",
+        "inboundTag": [
+          "transparent"
+        ],
+        "port": 53,
+        "network": "udp",
+        "outboundTag": "dns-out"
+      },
+      { // 直连 123 端口 UDP 流量（NTP 协议）
+        "type": "field",
+        "inboundTag": [
+          "transparent"
+        ],
+        "port": 123,
+        "network": "udp",
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          // 设置 DNS 配置中的国内 DNS 服务器地址走代理，以达到 DNS 分流目的
+          "8.8.8.8",
+          "1.1.1.1"
+        ],
+        "outboundTag": "proxy" // 改为你自己代理的出站 tag
+      },
+      { // 广告拦截
+        "type": "field",
+        "domain": [
+          "geosite:category-ads-all"
+        ],
+        "outboundTag": "block"
+      },
+      { // BT 流量直连
+        "type": "field",
+        "protocol":["bittorrent"],
+        "outboundTag": "direct"
+      },
+      { // 直连中国大陆主流网站 ip 和 保留 ip
+        "type": "field",
+        "ip": [
+          "geoip:private",
+          "geoip:cn"
+        ],
+        "outboundTag": "direct"
+      },
+      { // 直连中国大陆主流网站域名
+        "type": "field",
+        "domain": [
+          "geosite:cn"
+        ],
+        "outboundTag": "direct"
+      }
+    ]
+  }
+}
