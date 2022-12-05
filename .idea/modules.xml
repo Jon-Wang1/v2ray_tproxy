@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/v2ray_tproxy.iml" filepath="$PROJECT_DIR$/.idea/v2ray_tproxy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/v2ray_tporxy.iml" filepath="$PROJECT_DIR$/.idea/v2ray_tporxy.iml" />
     </modules>
   </component>
 </project>
